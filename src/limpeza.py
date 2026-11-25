@@ -765,21 +765,18 @@ def salvar_artefatos_saida(resultado: ResultadoLimpeza, diretorio_saida: Path) -
 
     # 4. relatorio_limpeza.md
     linhas_md = [
-        "# Relatório de Auditoria — Limpeza e Conciliação de Dados",
+        "# Relatório de Limpeza e Conciliação",
         "",
-        "Relatório gerado automaticamente pelo pipeline de saneamento (`src/limpeza.py`) a partir dos arquivos brutos de `case-candidato/dados/`.",
+        "Resultado gerado pelo script `src/limpeza.py` a partir dos arquivos originais em `case-candidato/dados/`.",
         "",
-        "## 1. Resumo Executivo",
+        "## Resumo",
+        f"- **Precatórios consolidados:** {len(resultado.precatorios)} (`output/precatorios_limpos.csv`)",
+        f"- **Eventos financeiros válidos:** {len(resultado.pagamentos)} (`output/pagamentos_limpos.json`)",
+        f"- **Correções aplicadas:** {len(resultado.corrigidos)}",
+        f"- **Registros descartados:** {len(resultado.descartados)}",
+        f"- **Registros em dúvida:** {len(resultado.duvidas)}",
         "",
-        "| Métrica de Processamento | Quantidade | Descrição |",
-        "|---|---:|---|",
-        f"| **Precatórios Consolidados** | `{len(resultado.precatorios)}` | Base unificada (`output/precatorios_limpos.csv`) após cruzamento Hub, Tribunal e Apresentações. |",
-        f"| **Eventos Financeiros Válidos** | `{len(resultado.pagamentos)}` | Pagamentos e estornos normalizados e deduplicados (`output/pagamentos_limpos.json`). |",
-        f"| **Transformações / Correções** | `{len(resultado.corrigidos)}` | Normalizações de máscara CNJ, encoding, datas, fuso horário, valores PT-BR, retificações e estornos. |",
-        f"| **Registros Descartados** | `{len(resultado.descartados)}` | Eventos inválidos (duplicatas exatas, valores nulos/negativos ou sem processo). |",
-        f"| **Itens em Dúvida (Revisão)** | `{len(resultado.duvidas)}` | Divergências cadastrais ou anomalias que requerem validação de negócio/tribunal. |",
-        "",
-        "## 2. Base Consolidada de Precatórios (`precatorios_limpos.csv`)",
+        "## Base Consolidada de Precatórios (`precatorios_limpos.csv`)",
         "",
         "| Processo (CNJ) | Ente Devedor | Valor de Face (R$) | Apresentado em (BRT) | Prazo Constitucional | Total Pago Líquido (R$) | Status |",
         "|---|---|---:|---|---|---:|---|",
@@ -793,7 +790,7 @@ def salvar_artefatos_saida(resultado: ResultadoLimpeza, diretorio_saida: Path) -
     linhas_md.extend(
         [
             "",
-            "## 3. Eventos Financeiros Limpos (`pagamentos_limpos.json`)",
+            "## Eventos Financeiros Limpos (`pagamentos_limpos.json`)",
             "",
             "| Evento ID | Processo (CNJ) | Tipo | Valor (R$) | Data Pagamento | Atualizado em |",
             "|---|---|---|---:|---|---|",
@@ -805,46 +802,22 @@ def salvar_artefatos_saida(resultado: ResultadoLimpeza, diretorio_saida: Path) -
             f"{ev['valor']} | `{ev['data_pagamento']}` | `{ev['atualizado_em']}` |"
         )
 
-    linhas_md.extend(
-        [
-            "",
-            "## 4. Registros Corrigidos (Transformações Aplicadas)",
-            "",
-            "| Origem | Identificador | Campo | Valor Original | Valor Final | Motivo da Correção |",
-            "|---|---|---|---|---|---|",
-        ]
-    )
+    linhas_md.extend(["", "## O que foi Corrigido", ""])
     for r in resultado.corrigidos:
         linhas_md.append(
-            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | `{r.valor_final}` | {r.motivo} |"
+            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}`):** `{r.valor_original}` → `{r.valor_final}` — {r.motivo}"
         )
 
-    linhas_md.extend(
-        [
-            "",
-            "## 5. Registros Descartados (Quarentena)",
-            "",
-            "| Origem | Identificador | Campo | Valor Original | Motivo do Descarte |",
-            "|---|---|---|---|---|",
-        ]
-    )
+    linhas_md.extend(["", "## O que foi Descartado", ""])
     for r in resultado.descartados:
         linhas_md.append(
-            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | {r.motivo} |"
+            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}` = `{r.valor_original}`):** {r.motivo}"
         )
 
-    linhas_md.extend(
-        [
-            "",
-            "## 6. Registros em Dúvida (Fila de Alinhamento)",
-            "",
-            "| Origem | Identificador | Campo | Valor Original | Valor Adotado | Justificativa / Ponto de Atenção |",
-            "|---|---|---|---|---|---|",
-        ]
-    )
+    linhas_md.extend(["", "## O que ficou em Dúvida", ""])
     for r in resultado.duvidas:
         linhas_md.append(
-            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | `{r.valor_final}` | {r.motivo} |"
+            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}`):** {r.motivo}"
         )
 
     (diretorio_saida / "relatorio_limpeza.md").write_text("\n".join(linhas_md) + "\n", encoding="utf-8")
