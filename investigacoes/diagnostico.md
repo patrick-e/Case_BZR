@@ -48,8 +48,8 @@ Problemas estruturais, de modelagem, formatação e documentação que atuam com
    - **Evidência:** Em [`hub.csv`](../case-candidato/dados/hub.csv#L2-L3), o mesmo ente aparece como `MUNICIPIO DE SAO PAULO` (caixa alta, sem acento) e `Município de São Paulo` (caixa mista, com acento).
    - **Causa ou Consequência:** **Causa** de falso negativo na conciliação manual exata entre `hub.csv` e `tribunal.csv`.
 
-3. **Corrupção de leiaute do `tribunal.csv` pelo uso do Excel**
-   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está separado por `;` e com números no formato `45.000,00`.
+3. **Corrupção de leiaute e codificação (`encoding`) do `tribunal.csv` pelo uso do Excel**
+   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica codificação `UTF-8`, separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está salvo em `Windows-1252/Latin-1` (byte `0xED` em `Município`), separado por `;` e com números no formato `45.000,00`.
    - **Causa ou Consequência:** **Consequência** do [item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), em que o operador abre e salva o arquivo no Excel em PT-BR antes da comparação.
 
 4. **Inconsistência temporal entre data de pagamento e data de apresentação**
@@ -71,8 +71,8 @@ Problemas estruturais, de modelagem, formatação e documentação que atuam com
    - **Evidência:** Em [`hub.csv`](../case-candidato/dados/hub.csv#L2-L3), o mesmo ente aparece como `MUNICIPIO DE SAO PAULO` (caixa alta, sem acento) e `Município de São Paulo` (caixa mista, com acento).
    - **Causa ou Consequência:** **Causa** de falso negativo na conciliação manual exata entre `hub.csv` e `tribunal.csv`.
 
-3. **Corrupção de leiaute do `tribunal.csv` pelo uso do Excel**
-   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está separado por `;` e com números no formato `45.000,00`.
+3. **Corrupção de leiaute e codificação (`encoding`) do `tribunal.csv` pelo uso do Excel**
+   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica codificação `UTF-8`, separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está salvo em `Windows-1252/Latin-1` (byte `0xED` em `Município`), separado por `;` e com números no formato `45.000,00`.
    - **Causa ou Consequência:** **Consequência** do [item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), em que o operador abre e salva o arquivo no Excel em PT-BR antes da comparação.
 
 4. **Inconsistência temporal entre data de pagamento e data de apresentação**

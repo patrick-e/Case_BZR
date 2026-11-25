@@ -54,6 +54,7 @@ Analisando a exportação do sistema interno [`hub.csv`](../case-candidato/dados
 
 Confrontando [`tribunal.csv`](../case-candidato/dados/tribunal.csv) com a [especificação da Documentação do Tribunal](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv):
 
+- **Codificação de caracteres (`encoding`) divergente:** A documentação especifica `UTF-8`, mas o arquivo real está codificado em `Windows-1252 / Latin-1` (o caractere `í` de `Município` é o byte `0xED`, que quebra leitores estritos de UTF-8) — consequência direta de o operador abrir e salvar no Excel no Windows.
 - **Separador de colunas divergente:** A documentação especifica campos separados por vírgula (`,`), mas o arquivo está separado por ponto e vírgula (`;`) — efeito colateral de o operador abrir e salvar o CSV no Excel em PT-BR ([item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)).
 - **Formato numérico de `valor_face` divergente:** A documentação especifica ponto como separador decimal, mas o arquivo usa ponto de milhar e vírgula decimal (`45.000,00`, `30.000,00`, etc.).
 
