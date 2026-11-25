@@ -1,0 +1,300 @@
+{
+  "resumo": {
+    "total_precatorios_limpos": 6,
+    "total_eventos_pagamento_validos": 8,
+    "total_corrigidos": 20,
+    "total_descartados": 4,
+    "total_em_duvida": 7
+  },
+  "corrigidos": [
+    {
+      "categoria": "corrigido",
+      "origem": "apresentacoes.json",
+      "identificador": "0045678-43.2021.5.02.0011",
+      "campo": "apresentado_em",
+      "valor_original": "2025-04-02T23:30:00-03:00",
+      "valor_final": "2025-04-02",
+      "motivo": "Timestamp convertido para fuso America/Sao_Paulo (-03:00) e extraída data civil."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "apresentacoes.json",
+      "identificador": "0056789-54.2017.4.03.6100",
+      "campo": "apresentado_em",
+      "valor_original": "2025-04-03T01:00:00Z",
+      "valor_final": "2025-04-02",
+      "motivo": "Timestamp convertido para fuso America/Sao_Paulo (-03:00) e extraída data civil."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "hub.csv",
+      "identificador": "0012345-10.2019.8.26.0053",
+      "campo": "ente",
+      "valor_original": "MUNICIPIO DE SAO PAULO",
+      "valor_final": "Município de São Paulo",
+      "motivo": "Padronizada grafia/acentuação e caixa do nome do ente devedor."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "hub.csv",
+      "identificador": "0012345-10.2019.8.26.0053",
+      "campo": "prazo_pagamento",
+      "valor_original": "2027-12-31",
+      "valor_final": "2026-12-31",
+      "motivo": "Recalculado prazo constitucional (corte <= 02/04 no fuso de Brasília para apresentação em 2025-04-02)."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "hub.csv",
+      "identificador": "0023456-21.2020.8.26.0053",
+      "campo": "processo",
+      "valor_original": "00234562120208260053",
+      "valor_final": "0023456-21.2020.8.26.0053",
+      "motivo": "Adicionada pontuação do padrão CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO)."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "hub.csv",
+      "identificador": "0056789-54.2017.4.03.6100",
+      "campo": "prazo_pagamento",
+      "valor_original": "2027-12-31",
+      "valor_final": "2026-12-31",
+      "motivo": "Recalculado prazo constitucional (corte <= 02/04 no fuso de Brasília para apresentação em 2025-04-02)."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "arquivo",
+      "campo": "encoding",
+      "valor_original": "cp1252 (Windows-1252 / Latin-1)",
+      "valor_final": "utf-8",
+      "motivo": "Arquivo salvo em Windows-1252/Latin-1 (pelo Excel) em vez de UTF-8 previsto na documentação."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "arquivo",
+      "campo": "delimitador",
+      "valor_original": ";",
+      "valor_final": ",",
+      "motivo": "Detectado delimitador ';' (gerado pelo Excel) em vez de ',' previsto na documentação."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "0012345-10.2019.8.26.0053",
+      "campo": "valor_face",
+      "valor_original": "45.000,00",
+      "valor_final": "45000.00",
+      "motivo": "Convertido valor monetário do formato PT-BR (ponto de milhar e vírgula decimal) para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "0023456-21.2020.8.26.0053",
+      "campo": "valor_face",
+      "valor_original": "30.000,00",
+      "valor_final": "30000.00",
+      "motivo": "Convertido valor monetário do formato PT-BR (ponto de milhar e vírgula decimal) para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "0034567-32.2018.8.26.0405",
+      "campo": "valor_face",
+      "valor_original": "12.500,00",
+      "valor_final": "12500.00",
+      "motivo": "Convertido valor monetário do formato PT-BR (ponto de milhar e vírgula decimal) para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "0045678-43.2021.5.02.0011",
+      "campo": "valor_face",
+      "valor_original": "9.800,00",
+      "valor_final": "9800.00",
+      "motivo": "Convertido valor monetário do formato PT-BR (ponto de milhar e vírgula decimal) para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "tribunal.csv",
+      "identificador": "0067890-65.2016.8.26.0053",
+      "campo": "valor_face",
+      "valor_original": "7.000,00",
+      "valor_final": "7000.00",
+      "motivo": "Convertido valor monetário do formato PT-BR (ponto de milhar e vírgula decimal) para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-002",
+      "campo": "valor",
+      "valor_original": "2.500,50",
+      "valor_final": "2500.50",
+      "motivo": "Convertido valor em string PT-BR ('2.500,50') para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-002",
+      "campo": "data_pagamento",
+      "valor_original": "10/04/2025",
+      "valor_final": "2025-04-10",
+      "motivo": "Convertida data de pagamento de DD/MM/AAAA para AAAA-MM-DD."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-002",
+      "campo": "valor",
+      "valor_original": "2.500,50",
+      "valor_final": "2500.50",
+      "motivo": "Convertido valor em string PT-BR ('2.500,50') para Decimal."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-002",
+      "campo": "data_pagamento",
+      "valor_original": "10/04/2025",
+      "valor_final": "2025-04-10",
+      "motivo": "Convertida data de pagamento de DD/MM/AAAA para AAAA-MM-DD."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-005",
+      "campo": "processo",
+      "valor_original": "00234562120208260053",
+      "valor_final": "0023456-21.2020.8.26.0053",
+      "motivo": "Adicionada máscara CNJ ao número do processo no evento de pagamento."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-001",
+      "campo": "valor",
+      "valor_original": "15000.00",
+      "valor_final": "15500.00",
+      "motivo": "Evento retificado pelo tribunal: mantida versão mais recente (atualizado_em 2025-03-11T09:00:00-03:00 > 2025-03-10T10:00:00-03:00)."
+    },
+    {
+      "categoria": "corrigido",
+      "origem": "pagamentos.json",
+      "identificador": "ev-007",
+      "campo": "tipo",
+      "valor_original": "+5000.00 (soma indevida)",
+      "valor_final": "-5000.00 (estorno abatido)",
+      "motivo": "Evento de estorno (ev-007) subtraído do total pago do processo 0034567-32.2018.8.26.0405."
+    }
+  ],
+  "descartados": [
+    {
+      "categoria": "descartado",
+      "origem": "pagamentos.json",
+      "identificador": "ev-002",
+      "campo": "evento_id",
+      "valor_original": "ev-002",
+      "valor_final": null,
+      "motivo": "Duplicata exata de evento_id descartada."
+    },
+    {
+      "categoria": "descartado",
+      "origem": "pagamentos.json",
+      "identificador": "ev-004",
+      "campo": "valor",
+      "valor_original": null,
+      "valor_final": null,
+      "motivo": "Evento descartado: valor nulo ou não numérico."
+    },
+    {
+      "categoria": "descartado",
+      "origem": "pagamentos.json",
+      "identificador": "ev-009",
+      "campo": "valor",
+      "valor_original": -200,
+      "valor_final": null,
+      "motivo": "Evento descartado e enviado para auditoria: valor <= 0 (-200.00) com tipo='pagamento' (viola CHECK valor > 0 do banco)."
+    },
+    {
+      "categoria": "descartado",
+      "origem": "pagamentos.json",
+      "identificador": "ev-010",
+      "campo": "processo",
+      "valor_original": "",
+      "valor_final": null,
+      "motivo": "Evento descartado: campo 'processo' vazio ou fora do padrão CNJ."
+    }
+  ],
+  "duvidas": [
+    {
+      "categoria": "duvida",
+      "origem": "hub.csv vs tribunal.csv",
+      "identificador": "0023456-21.2020.8.26.0053",
+      "campo": "valor_face",
+      "valor_original": {
+        "hub": "31000.00",
+        "tribunal": "30000.00"
+      },
+      "valor_final": "30000.00",
+      "motivo": "Valor de face diverge entre Hub (31000.00) e Tribunal (30000.00). Adotado valor do Tribunal e marcado para revisão."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "hub.csv vs tribunal.csv",
+      "identificador": "0045678-43.2021.5.02.0011",
+      "campo": "ente_devedor",
+      "valor_original": {
+        "hub": "Município de Santos",
+        "tribunal": "União"
+      },
+      "valor_final": "União",
+      "motivo": "Ente devedor diverge entre Hub ('Município de Santos') e Tribunal ('União'). Adotado valor do Tribunal e marcado para revisão."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "hub.csv (ausente no tribunal.csv)",
+      "identificador": "0056789-54.2017.4.03.6100",
+      "campo": "cadastro_precatorio",
+      "valor_original": "0056789-54.2017.4.03.6100",
+      "valor_final": "0056789-54.2017.4.03.6100",
+      "motivo": "Processo consta no hub.csv e apresentacoes.json, mas não veio no arquivo semanal tribunal.csv. Mantido na base com status 'em_duvida'."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "tribunal.csv (ausente no hub.csv)",
+      "identificador": "0067890-65.2016.8.26.0053",
+      "campo": "cadastro_precatorio",
+      "valor_original": null,
+      "valor_final": "0067890-65.2016.8.26.0053",
+      "motivo": "Processo existe em tribunal.csv, apresentacoes.json e possui pagamento, mas não estava cadastrado no hub.csv. Incluído na base limpa para confirmação."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "pagamentos.json",
+      "identificador": "ev-001",
+      "campo": "valor",
+      "valor_original": "15000.00",
+      "valor_final": "15500.00",
+      "motivo": "Mesmo evento_id (ev-001) enviado com valor alterado de 15000.00 para 15500.00. Assumida substituição pelo mais recente; confirmar com tribunal."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "pagamentos.json",
+      "identificador": "ev-009",
+      "campo": "valor",
+      "valor_original": -200,
+      "valor_final": null,
+      "motivo": "Evento ev-009 do processo 0056789-54.2017.4.03.6100 veio com tipo='pagamento' e valor negativo (-200.00). Confirmar com tribunal se é um estorno mal classificado."
+    },
+    {
+      "categoria": "duvida",
+      "origem": "pagamentos.json vs apresentacoes.json",
+      "identificador": "ev-001",
+      "campo": "data_pagamento",
+      "valor_original": "2025-03-10",
+      "valor_final": "2025-03-10",
+      "motivo": "Data de pagamento (2025-03-10) do processo 0012345-10.2019.8.26.0053 é anterior à data de apresentação (2025-04-02)."
+    }
+  ]
+}

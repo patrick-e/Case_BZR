@@ -1,0 +1,7 @@
+numero_processo,ente_devedor,valor_face,apresentado_em,prazo_pagamento,total_pago_liquido,status_conciliacao
+0012345-10.2019.8.26.0053,Município de São Paulo,45000.00,2025-04-02,2026-12-31,18000.50,conciliado
+0023456-21.2020.8.26.0053,Município de São Paulo,30000.00,2025-04-03,2027-12-31,9200.00,em_duvida
+0034567-32.2018.8.26.0405,Estado de São Paulo,12500.00,2024-02-29,2025-12-31,0.00,conciliado
+0045678-43.2021.5.02.0011,União,9800.00,2025-04-02,2026-12-31,3000.00,em_duvida
+0056789-54.2017.4.03.6100,Estado de São Paulo,22000.00,2025-04-02,2026-12-31,0.00,em_duvida
+0067890-65.2016.8.26.0053,Município de São Paulo,7000.00,2023-12-31,2025-12-31,4000.00,em_duvida
