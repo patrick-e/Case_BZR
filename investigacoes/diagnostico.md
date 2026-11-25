@@ -1,84 +1,81 @@
-# critico
+# Diagnóstico Técnico por Nível de Severidade
 
-Os problemas abaixo distorcem diretamente o saldo financeiro pago, descartam eventos válidos sem alerta ou corrompem a priorização da carteira de precatórios. Estão ordenados do mais grave para o menos grave:
+Este documento classifica as falhas identificadas na [Investigação Exploratória](investigacao.md) em **ordem decrescente de gravidade**, distinguindo **causas raiz** de **consequências operacionais**.
 
-1. **Multiplicação de pagamentos por falta de idempotência (`evento_id` sem `UNIQUE` + janela de 7 dias + reexecução manual)**
-   - **Evidência:** Em [`pagamentos.json`](../case-candidato/dados/pagamentos.json), `ev-002` aparece duplicado (linhas 11 e 27) e `ev-001` aparece duas vezes com valores diferentes (`15000.0` na linha 3 e retificado para `15500.0` na linha 67). Em [`schema.sql`](../case-candidato/schema.sql#L11), a coluna `evento_id` da tabela `pagamento` não possui constraint `UNIQUE`.
-   - **Causa ou Consequência:** **Causa raiz** da divergência financeira entre o sistema e o tribunal, agravada pelos [itens 1 e 2 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional) (reenvio diário dos últimos 7 dias e reprocessamento manual do arquivo inteiro quando o script falha).
-   - **Impacto:** Veja [Inflação do saldo pago](Impactos.md#1-infla%C3%A7%C3%A3o-e-distor%C3%A7%C3%A3o-do-saldo-pago-impacto-financeiro-direto).
+```mermaid
+flowchart TD
+    subgraph Critico["Nível Crítico (Impacto Financeiro e Estratégico Direto)"]
+        C1["1. Multiplicação de pagamentos\n(Sem UNIQUE + janela 7 dias)"]
+        C2["2. Soma indevida de estornos\n(ev-007 somado em vez de abatido)"]
+        C3["3. Descarte silencioso (Fail-Silent)\n(Pagamentos reais ignorados sem log)"]
+        C4["4. Divergências cadastrais Hub vs Tribunal\n(Valor de face, Ente e Processos ausentes)"]
+        C5["5. Erro no prazo constitucional (02/04)\n(Operador '<' e falta de conversão UTC -> BRT)"]
+    end
 
-2. **Soma indevida de estornos como se fossem pagamentos**
-   - **Evidência:** O registro `ev-007` em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L59-L65) possui `"tipo": "estorno"` e `"valor": 5000` (anulando o pagamento `ev-006` do processo `0034567-32.2018.8.26.0405`), contrariando a [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#L15) que afirma que `tipo` é sempre `"pagamento"`.
-   - **Causa ou Consequência:** **Causa** de erro de saldo (regra de negócio do script no [item 2 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional) que *"soma cada valor ao total pago"* sem verificar o `tipo`), induzida por documentação desatualizada frente ao [`schema.sql`](../case-candidato/schema.sql#L12) (`CHECK (tipo IN ('pagamento', 'estorno'))`).
+    subgraph Moderado["Nível Moderado (Catalisadores Estruturais e de Leiaute)"]
+        R1["6. Coluna CHAR(20) incompatível com CNJ (25 chars)"]
+        R2["7. Ente devedor em texto livre sem normalização"]
+        R3["8. Corrupção de encoding/delimitador pelo Excel"]
+        R4["9. Pagamento com data anterior à apresentação"]
+        R5["10. Defasagem entre schema.sql e documentação"]
+    end
 
-3. **Descarte silencioso de eventos por falha de validação, tipo ou chave estrangeira**
-   - **Evidência:** Pelo [item 5 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), qualquer erro faz o script ignorar o evento sem avisar ninguém. Isso afeta:
-     - `ev-002` (linhas 11 e 27): `valor` em string PT-BR (`"2.500,50"`) e `data_pagamento` em `DD/MM/AAAA` (`"10/04/2025"`).
-     - `ev-004` (linha 35): `valor: null` (viola `NOT NULL` em [`schema.sql`](../case-candidato/schema.sql#L13)).
-     - `ev-005` (linha 43): `processo` sem máscara (`"00234562120208260053"`), que pode falhar no lookup se a busca exigir formatação idêntica.
-     - `ev-009` (linha 83): `valor: -200` com `"tipo": "pagamento"` (viola `CHECK (valor > 0)` em [`schema.sql`](../case-candidato/schema.sql#L13)).
-     - `ev-010` (linha 91): `processo: ""` (vazio, impossível vincular a `precatorio_id`).
-     - `ev-011` (linha 99): pagamento de `4000` para o processo `0067890-65.2016.8.26.0053`, que **não existe** no [`hub.csv`](../case-candidato/dados/hub.csv) (falha de FK `precatorio_id`).
-   - **Causa ou Consequência:** **Consequência** da falta de validação/normalização na entrada somada à política de *fail-silent* (ignorar erros sem log/alerta).
-
-4. **Divergências cadastrais graves entre `hub.csv` e `tribunal.csv` (processos faltantes, valor de face e ente devedor)**
-   - **Evidência:**
-     - **Processos ausentes:** `0067890-65.2016.8.26.0053` consta em [`tribunal.csv`](../case-candidato/dados/tribunal.csv#L6), [`apresentacoes.json`](../case-candidato/dados/apresentacoes.json#L23) e [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L100), mas não no [`hub.csv`](../case-candidato/dados/hub.csv). Já `0056789-54.2017.4.03.6100` está no [`hub.csv`](../case-candidato/dados/hub.csv#L6), mas não em [`tribunal.csv`](../case-candidato/dados/tribunal.csv).
-     - **Conflito de Ente Devedor:** `0045678-43.2021.5.02.0011` está como `Município de Santos` no [`hub.csv`](../case-candidato/dados/hub.csv#L5) e como `União` no [`tribunal.csv`](../case-candidato/dados/tribunal.csv#L5) (nota: o segmento `5.02` do CNJ indica TRT da 2ª Região / Justiça do Trabalho).
-     - **Conflito de Valor de Face:** `0023456-21.2020.8.26.0053` vale `31000.00` no [`hub.csv`](../case-candidato/dados/hub.csv#L3) e `30.000,00` no [`tribunal.csv`](../case-candidato/dados/tribunal.csv#L3).
-   - **Causa ou Consequência:** **Consequência** da conciliação manual frágil ([item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)) e da falta de sincronização automatizada do cadastro de precatórios.
-
-5. **Cálculo incorreto do prazo constitucional de pagamento (Regra de 2 de abril e fuso horário UTC)**
-   - **Evidência:** Pela [regra constitucional do Enunciado](../case-candidato/ENUNCIADO.md#contexto), precatórios apresentados **até** 2 de abril vencem em `31/12` do ano seguinte. Em [`hub.csv`](../case-candidato/dados/hub.csv):
-     - Linha 2 (`0012345-10.2019.8.26.0053`): `apresentado_em = 2025-04-02`, mas `prazo_pagamento` foi calculado como `2027-12-31` (erro de condição `< 02/04` em vez de `<= 02/04`; o correto é `2026-12-31`).
-     - Linha 6 (`0056789-54.2017.4.03.6100`): `apresentado_em = 2025-04-03T01:00:00Z`. Convertendo de UTC para Brasília (`-03:00`), foi apresentado em `2025-04-02T22:00:00-03:00` (ainda dia 2 de abril!), mas o sistema usou a data UTC e jogou o prazo para `2027-12-31` em vez de `2026-12-31`.
-   - **Causa ou Consequência:** **Causa** de priorização errada da carteira ([item 4 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)).
+    R1 & R2 & R3 --> C3 & C4
+    R5 --> C1 & C2
+```
 
 ---
 
-# razoavel
+<a id="critico"></a>
+## 1. Nível Crítico (Risco Financeiro e Operacional Imediato)
 
-Problemas estruturais, de modelagem, formatação e documentação que atuam como catalisadores das falhas críticas ou quebram a rotina de conciliação:
+Problemas que distorcem diretamente o saldo financeiro da carteira, descartam eventos válidos sem rastreabilidade ou comprometem a projeção de fluxo de caixa.
 
-1. **Modelagem `CHAR(20)` incompatível com o formato CNJ formatado (25 caracteres) e falta de normalização**
-   - **Evidência:** [`schema.sql`](../case-candidato/schema.sql#L3) define `numero_processo CHAR(20)`, mas o formato CNJ (`NNNNNNN-DD.AAAA.J.TR.OOOO`) tem 25 caracteres (20 dígitos + 5 separadores). No [`hub.csv`](../case-candidato/dados/hub.csv#L3) e em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L44) (`ev-005`), o processo `00234562120208260053` aparece sem pontuação (20 dígitos), enquanto em [`tribunal.csv`](../case-candidato/dados/tribunal.csv#L3) está formatado com 25 caracteres.
-   - **Causa ou Consequência:** **Causa** da falha na comparação exata feita pelo operador ([item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)).
+### 1.1. Multiplicação de pagamentos por ausência de idempotência
+- **Classificação:** **Causa Raiz**
+- **Evidência:** Em [`pagamentos.json`](../case-candidato/dados/pagamentos.json), `ev-002` está duplicado (linhas 11 e 27) e `ev-001` aparece duas vezes devido a uma retificação de valor (`15000.0` em `10/03` para `15500.0` em `11/03`). Paralelamente, a coluna `evento_id` em [`schema.sql`](../case-candidato/schema.sql#L11) não possui restrição `UNIQUE`.
+- **Mecanismo da Falha:** O tribunal reenvia diariamente uma janela móvel dos últimos 7 dias e o operador reexecuta o script manualmente em caso de erro ([itens 1 e 2 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)). Sem `UNIQUE (evento_id)` e lógica de *Upsert*, cada execução acumula valores repetidos.
+- **Impacto Associado:** [Inflação e distorção do saldo pago](Impactos.md#1-infla%C3%A7%C3%A3o-e-distor%C3%A7%C3%A3o-do-saldo-pago-impacto-financeiro-direto).
 
-2. **Falta de padronização do nome do `ente_devedor` (`TEXT` livre)**
-   - **Evidência:** Em [`hub.csv`](../case-candidato/dados/hub.csv#L2-L3), o mesmo ente aparece como `MUNICIPIO DE SAO PAULO` (caixa alta, sem acento) e `Município de São Paulo` (caixa mista, com acento).
-   - **Causa ou Consequência:** **Causa** de falso negativo na conciliação manual exata entre `hub.csv` e `tribunal.csv`.
+### 1.2. Contabilização de estornos como pagamentos positivos
+- **Classificação:** **Causa Raiz**
+- **Evidência:** O evento `ev-007` em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L59-L65) possui `"tipo": "estorno"` e `"valor": 5000` (referente ao processo `0034567-32.2018.8.26.0405`), contradizendo [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#L15), que afirma que o campo `tipo` é sempre `"pagamento"`.
+- **Mecanismo da Falha:** O script de importação *"soma cada valor ao total pago"* ([item 2 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)) sem avaliar a natureza da operação (`pagamento` vs `estorno`). O processo, cujo saldo líquido deveria ser **R\$ 0,00** (`+5000` de `ev-006` e `-5000` de `ev-007`), passa a exibir **R\$ 10.000,00** pagos.
 
-3. **Corrupção de leiaute e codificação (`encoding`) do `tribunal.csv` pelo uso do Excel**
-   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica codificação `UTF-8`, separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está salvo em `Windows-1252/Latin-1` (byte `0xED` em `Município`), separado por `;` e com números no formato `45.000,00`.
-   - **Causa ou Consequência:** **Consequência** do [item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), em que o operador abre e salva o arquivo no Excel em PT-BR antes da comparação.
+### 1.3. Descarte silencioso de eventos (*Fail-Silent*)
+- **Classificação:** **Consequência** (da ausência de camada de normalização aliada à política de ignorar erros sem log)
+- **Evidência:** Conforme o [item 5 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), qualquer falha faz o script descartar o registro sem alerta. Isso impacta **6 eventos** do lote analisado:
+  - `ev-002`: Valor em formato string PT-BR (`"2.500,50"`) e data em `DD/MM/AAAA` (`"10/04/2025"`).
+  - `ev-004`: Valor nulo (`null`), violando `NOT NULL`.
+  - `ev-005`: Processo sem pontuação CNJ (`"00234562120208260053"`), falhando no vínculo por string exata.
+  - `ev-009`: Valor negativo (`-200`), violando `CHECK (valor > 0)`.
+  - `ev-010`: Campo `processo` vazio (`""`).
+  - `ev-011`: Pagamento de R\$ 4.000,00 para processo (`0067890-65.2016.8.26.0053`) ainda não cadastrado no `hub.csv` (falha de chave estrangeira `precatorio_id`).
 
-4. **Inconsistência temporal entre data de pagamento e data de apresentação**
-   - **Evidência:** O processo `0012345-10.2019.8.26.0053` tem pagamento em `2025-03-10` (`ev-001` em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L6)), anterior à sua data de apresentação `2025-04-02` em [`apresentacoes.json`](../case-candidato/dados/apresentacoes.json#L4).
-   - **Causa ou Consequência:** Possível **consequência** de erro cadastral na data de apresentação ou pagamento lançado no processo errado.
+### 1.4. Divergências cadastrais críticas entre `hub.csv` e `tribunal.csv`
+- **Classificação:** **Consequência** (da conciliação manual frágil e ausência de sincronização automatizada)
+- **Evidência:**
+  - **Omissão de Processos:** `0067890-65.2016.8.26.0053` existe no Tribunal, foi apresentado e recebeu pagamento (`ev-011`), mas não consta no Hub. Inversamente, `0056789-54.2017.4.03.6100` está no Hub, mas não veio em `tribunal.csv`.
+  - **Conflito de Ente Devedor:** `0045678-43.2021.5.02.0011` consta como `Município de Santos` no Hub e como `União` no Tribunal.
+  - **Conflito de Valor de Face:** `0023456-21.2020.8.26.0053` registra `31000.00` no Hub e `30.000,00` no Tribunal.
 
-5. **Defasagem entre `schema.sql`, `DOCUMENTACAO_TRIBUNAL.md` e os dados reais**
-   - **Evidência:** [`apresentacoes.json`](../case-candidato/dados/apresentacoes.json) não está documentado em [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md); a tabela `precatorio` em [`schema.sql`](../case-candidato/schema.sql#L1-L6) não possui as colunas `apresentado_em` e `prazo_pagamento` presentes em [`hub.csv`](../case-candidato/dados/hub.csv).
-   - **Causa ou Consequência:** **Causa** de acoplamento frágil e falta de contrato de integração entre tribunal e operação.
+### 1.5. Cálculo incorreto do prazo constitucional (Regra de 2 de abril e Fuso Horário)
+- **Classificação:** **Causa Raiz** (de erro na priorização da carteira)
+- **Evidência:** Precatórios apresentados **até 2 de abril** vencem em `31/12` do ano seguinte; após essa data, vencem em `31/12` de dois anos à frente. Em [`hub.csv`](../case-candidato/dados/hub.csv):
+  - `0012345-10.2019.8.26.0053` (`apresentado_em = 2025-04-02`): Calculado como `2027-12-31` por erro de operador lógico (`< 02/04` em vez de `<= 02/04`). O prazo correto é **`2026-12-31`**.
+  - `0056789-54.2017.4.03.6100` (`apresentado_em = 2025-04-03T01:00:00Z`): Convertido para o fuso de Brasília (`America/Sao_Paulo`, `-03:00`), o protocolo ocorreu em **`2025-04-02` às 22h00**. O sistema utilizou a data UTC bruta e projetou `2027-12-31` em vez de **`2026-12-31`**.
 
+---
 
-Problemas estruturais, de modelagem, formatação e documentação que atuam como catalisadores das falhas críticas ou quebram a rotina de conciliação:
+<a id="razoavel"></a>
+## 2. Nível Moderado (Problemas Estruturais, de Modelagem e Leiaute)
 
-1. **Modelagem `CHAR(20)` incompatível com o formato CNJ formatado (25 caracteres) e falta de normalização**
-   - **Evidência:** [`schema.sql`](../case-candidato/schema.sql#L3) define `numero_processo CHAR(20)`, mas o formato CNJ (`NNNNNNN-DD.AAAA.J.TR.OOOO`) tem 25 caracteres (20 dígitos + 5 separadores). No [`hub.csv`](../case-candidato/dados/hub.csv#L3) e em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L44) (`ev-005`), o processo `00234562120208260053` aparece sem pontuação (20 dígitos), enquanto em [`tribunal.csv`](../case-candidato/dados/tribunal.csv#L3) está formatado com 25 caracteres.
-   - **Causa ou Consequência:** **Causa** da falha na comparação exata feita pelo operador ([item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional)).
+Falhas de modelagem, formatação e processo que inviabilizam a conciliação direta e alimentam os erros críticos.
 
-2. **Falta de padronização do nome do `ente_devedor` (`TEXT` livre)**
-   - **Evidência:** Em [`hub.csv`](../case-candidato/dados/hub.csv#L2-L3), o mesmo ente aparece como `MUNICIPIO DE SAO PAULO` (caixa alta, sem acento) e `Município de São Paulo` (caixa mista, com acento).
-   - **Causa ou Consequência:** **Causa** de falso negativo na conciliação manual exata entre `hub.csv` e `tribunal.csv`.
-
-3. **Corrupção de leiaute e codificação (`encoding`) do `tribunal.csv` pelo uso do Excel**
-   - **Evidência:** [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md#tribunalcsv) especifica codificação `UTF-8`, separador `,` e ponto decimal, mas [`tribunal.csv`](../case-candidato/dados/tribunal.csv) está salvo em `Windows-1252/Latin-1` (byte `0xED` em `Município`), separado por `;` e com números no formato `45.000,00`.
-   - **Causa ou Consequência:** **Consequência** do [item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional), em que o operador abre e salva o arquivo no Excel em PT-BR antes da comparação.
-
-4. **Inconsistência temporal entre data de pagamento e data de apresentação**
-   - **Evidência:** O processo `0012345-10.2019.8.26.0053` tem pagamento em `2025-03-10` (`ev-001` em [`pagamentos.json`](../case-candidato/dados/pagamentos.json#L6)), anterior à sua data de apresentação `2025-04-02` em [`apresentacoes.json`](../case-candidato/dados/apresentacoes.json#L4).
-   - **Causa ou Consequência:** Possível **consequência** de erro cadastral na data de apresentação ou pagamento lançado no processo errado.
-
-5. **Defasagem entre `schema.sql`, `DOCUMENTACAO_TRIBUNAL.md` e os dados reais**
-   - **Evidência:** [`apresentacoes.json`](../case-candidato/dados/apresentacoes.json) não está documentado em [`DOCUMENTACAO_TRIBUNAL.md`](../case-candidato/DOCUMENTACAO_TRIBUNAL.md); a tabela `precatorio` em [`schema.sql`](../case-candidato/schema.sql#L1-L6) não possui as colunas `apresentado_em` e `prazo_pagamento` presentes em [`hub.csv`](../case-candidato/dados/hub.csv).
-   - **Causa ou Consequência:** **Causa** de acoplamento frágil e falta de contrato de integração entre tribunal e operação.
+| # | Problema Identificado | Tipo | Evidência Técnica | Efeito na Operação |
+|---|---|---|---|---|
+| **2.1** | **Coluna `CHAR(20)` incompatível com máscara CNJ** | Causa | [`schema.sql`](../case-candidato/schema.sql#L3) define `CHAR(20)`, mas o padrão CNJ formatado (`NNNNNNN-DD.AAAA.J.TR.OOOO`) exige **25 caracteres**. | Força o armazenamento sem pontuação em parte da base (`00234562120208260053`), quebrando comparações exatas. |
+| **2.2** | **Ente devedor sem normalização (`TEXT` livre)** | Causa | Em [`hub.csv`](../case-candidato/dados/hub.csv#L2-L3) coexistem `MUNICIPIO DE SAO PAULO` e `Município de São Paulo`. | Gera falsos negativos na conferência semanal entre Hub e Tribunal. |
+| **2.3** | **Corrupção de `tribunal.csv` via Excel** | Consequência | O arquivo real veio em `Windows-1252`, delimitado por `;` e com valores `45.000,00`, divergindo do contrato (`UTF-8`, `,`, `.`). | Efeito direto do [item 3 do Fluxo Operacional](../case-candidato/ENUNCIADO.md#o-fluxo-operacional) (abrir e salvar no Excel PT-BR antes de conciliar). |
+| **2.4** | **Anomalia cronológica (Pagamento < Apresentação)** | Consequência | No processo `0012345-10.2019.8.26.0053`, o pagamento `ev-001` (`2025-03-10`) antecede a apresentação (`2025-04-02`). | Indica erro cadastral na data de apresentação ou imputação de pagamento em processo incorreto. |
+| **2.5** | **Defasagem entre `schema.sql` e Documentação** | Causa | `apresentacoes.json` não está documentado; `precatorio` em `schema.sql` não possui `apresentado_em` nem `prazo_pagamento`. | Fragiliza a integração e impede auditoria de prazos diretamente no banco de dados. |

@@ -765,14 +765,19 @@ def salvar_artefatos_saida(resultado: ResultadoLimpeza, diretorio_saida: Path) -
 
     # 4. relatorio_limpeza.md
     linhas_md = [
-        "# Relatório de Limpeza e Conciliação de Dados",
+        "# Relatório de Auditoria — Limpeza e Conciliação de Dados",
+        "",
+        "Relatório gerado automaticamente pelo pipeline de saneamento (`src/limpeza.py`) a partir dos arquivos brutos de `case-candidato/dados/`.",
         "",
         "## 1. Resumo Executivo",
-        f"- **Precatórios consolidados:** {len(resultado.precatorios)}",
-        f"- **Eventos financeiros válidos (pagamentos/estornos):** {len(resultado.pagamentos)}",
-        f"- **Transformações / Correções aplicadas:** {len(resultado.corrigidos)}",
-        f"- **Registros descartados:** {len(resultado.descartados)}",
-        f"- **Itens em dúvida (para revisão/alinhamento):** {len(resultado.duvidas)}",
+        "",
+        "| Métrica de Processamento | Quantidade | Descrição |",
+        "|---|---:|---|",
+        f"| **Precatórios Consolidados** | `{len(resultado.precatorios)}` | Base unificada (`output/precatorios_limpos.csv`) após cruzamento Hub, Tribunal e Apresentações. |",
+        f"| **Eventos Financeiros Válidos** | `{len(resultado.pagamentos)}` | Pagamentos e estornos normalizados e deduplicados (`output/pagamentos_limpos.json`). |",
+        f"| **Transformações / Correções** | `{len(resultado.corrigidos)}` | Normalizações de máscara CNJ, encoding, datas, fuso horário, valores PT-BR, retificações e estornos. |",
+        f"| **Registros Descartados** | `{len(resultado.descartados)}` | Eventos inválidos (duplicatas exatas, valores nulos/negativos ou sem processo). |",
+        f"| **Itens em Dúvida (Revisão)** | `{len(resultado.duvidas)}` | Divergências cadastrais ou anomalias que requerem validação de negócio/tribunal. |",
         "",
         "## 2. Base Consolidada de Precatórios (`precatorios_limpos.csv`)",
         "",
@@ -800,22 +805,46 @@ def salvar_artefatos_saida(resultado: ResultadoLimpeza, diretorio_saida: Path) -
             f"{ev['valor']} | `{ev['data_pagamento']}` | `{ev['atualizado_em']}` |"
         )
 
-    linhas_md.extend(["", "## 4. O que foi CORRIGIDO e por quê", ""])
+    linhas_md.extend(
+        [
+            "",
+            "## 4. Registros Corrigidos (Transformações Aplicadas)",
+            "",
+            "| Origem | Identificador | Campo | Valor Original | Valor Final | Motivo da Correção |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
     for r in resultado.corrigidos:
         linhas_md.append(
-            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}`):** `{r.valor_original}` → `{r.valor_final}` — {r.motivo}"
+            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | `{r.valor_final}` | {r.motivo} |"
         )
 
-    linhas_md.extend(["", "## 5. O que foi DESCARTADO e por quê", ""])
+    linhas_md.extend(
+        [
+            "",
+            "## 5. Registros Descartados (Quarentena)",
+            "",
+            "| Origem | Identificador | Campo | Valor Original | Motivo do Descarte |",
+            "|---|---|---|---|---|",
+        ]
+    )
     for r in resultado.descartados:
         linhas_md.append(
-            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}` = `{r.valor_original}`):** {r.motivo}"
+            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | {r.motivo} |"
         )
 
-    linhas_md.extend(["", "## 6. O que ficou EM DÚVIDA e por quê", ""])
+    linhas_md.extend(
+        [
+            "",
+            "## 6. Registros em Dúvida (Fila de Alinhamento)",
+            "",
+            "| Origem | Identificador | Campo | Valor Original | Valor Adotado | Justificativa / Ponto de Atenção |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
     for r in resultado.duvidas:
         linhas_md.append(
-            f"- **[{r.origem}] `{r.identificador}` (`{r.campo}`):** {r.motivo}"
+            f"| `{r.origem}` | `{r.identificador}` | `{r.campo}` | `{r.valor_original}` | `{r.valor_final}` | {r.motivo} |"
         )
 
     (diretorio_saida / "relatorio_limpeza.md").write_text("\n".join(linhas_md) + "\n", encoding="utf-8")
